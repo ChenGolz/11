@@ -1,9 +1,14 @@
 // assets/backend-config.js
-// הדביקו כאן את פרטי Supabase שלכם.
-// אפשר להשאיר כפי שהוא—ואז האתר יעבוד במצב מקומי (ללא שיתוף בין מבקרים).
+// ברירת מחדל: מצב ללא Backend (נרות + מילים נשמרים מקומית בלבד).
+// כדי להפעיל שיתוף לכולם דרך Supabase:
+// 1) צרו פרויקט ב-Supabase
+// 2) מלאו את supabaseUrl ואת supabaseAnonKey למטה
+// 3) ודאו שה- SQL ב-SETUP_SUPABASE.md רץ
+//
+// לאחר מכן, החליפו provider ל-"supabase".
 
 window.BACKEND = {
-  provider: "supabase",
-  supabaseUrl: "https://YOUR-PROJECT.supabase.co",
-  supabaseAnonKey: "YOUR_ANON_KEY"
+  provider: "disabled",
+  supabaseUrl: "",
+  supabaseAnonKey: ""
 };

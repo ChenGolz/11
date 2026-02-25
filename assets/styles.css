@@ -1,13 +1,13 @@
 :root{
-  --bg:#06162e;
-  --panel: rgba(147,197,253,.10);
-  --panel2: rgba(96,165,250,.26);
+  --bg: #071a33;
+  --panel: rgba(255,255,255,0.07);
+  --panel2: rgba(255,255,255,.10);
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.72);
-  --line: rgba(147,197,253,.22);
+  --line: rgba(255,255,255,.14);
 
   --accent: #60a5fa;
-  --accent2:#93c5fd;
+  --accent2: #93c5fd;
 
   --shadow: 0 18px 60px rgba(0,0,0,.45);
   --radius: 18px;
@@ -22,9 +22,9 @@ body{
   font-family: system-ui, -apple-system, "Segoe UI", Arial, "Noto Sans Hebrew", sans-serif;
   color: var(--text);
   background:
-    radial-gradient(1200px 800px at 80% -10%, rgba(147,197,253,.30), transparent 60%),
-    radial-gradient(900px 700px at 10% 10%, rgba(96,165,250,.26), transparent 55%),
-    linear-gradient(180deg, #0b2a5a, var(--bg));
+    radial-gradient(1200px 800px at 80% -10%, rgba(147,197,253,.16), transparent 60%),
+    radial-gradient(900px 700px at 10% 10%, rgba(96,165,250,.14), transparent 55%),
+    linear-gradient(180deg, #070b0b, var(--bg));
   overflow-x:hidden;
 }
 
@@ -308,4 +308,37 @@ select option{
     radial-gradient(circle at 30% 30%, rgba(96,165,250,.92), rgba(96,165,250,.10) 58%, transparent 60%),
     radial-gradient(circle at 70% 70%, rgba(147,197,253,.88), rgba(147,197,253,.10) 55%, transparent 58%),
     linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+}
+
+
+/* Bright blue theme (override) */
+body{
+  background:
+    radial-gradient(1200px 700px at 75% -10%, rgba(96,165,250,.28), transparent 60%),
+    radial-gradient(900px 600px at 10% 0%, rgba(147,197,253,.18), transparent 55%),
+    radial-gradient(1200px 900px at 50% 110%, rgba(14,165,233,.10), transparent 55%),
+    linear-gradient(180deg, #051024, #071a33 40%, #061225 100%);
+}
+
+/* כרטיסים מעט בהירים יותר */
+.card{
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(147,197,253,0.22);
+}
+.card:hover{
+  border-color: rgba(96,165,250,0.45);
+}
+
+/* כפתורים */
+.btn.primary{
+  background: linear-gradient(135deg, rgba(96,165,250,.95), rgba(59,130,246,.85));
+}
+.badge{
+  border-color: rgba(147,197,253,0.22);
+}
+
+/* תיקון קומבו בוקס (Chrome/Windows) */
+select option{
+  color: #0b1010;
+  background: #ffffff;
 }

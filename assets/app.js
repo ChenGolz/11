@@ -17,12 +17,22 @@ function getBackendConfig(){
 
 function isSupabaseReady(){
   const cfg = getBackendConfig();
-  return !!(cfg && cfg.provider === "supabase" && cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase);
+  if (!(cfg && cfg.provider === "supabase")) return false;
+  if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) return false;
+
+  // ברירת מחדל בתבנית כוללת placeholder — לא מפעילים עד שמגדירים באמת
+  const bad = (s) => /YOUR\-|your\-|YOUR_|your_|example|supabase\.co\/\/?$/.test(String(s));
+  if (bad(cfg.supabaseUrl) || bad(cfg.supabaseAnonKey)) return false;
+
+  return !!window.supabase;
 }
 
 function supa(){
   const cfg = getBackendConfig();
-  return window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  if (!window.__supaClient){
+    window.__supaClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  }
+  return window.__supaClient;
 }
 
 function qs(name) {
@@ -147,7 +157,7 @@ async function initField() {
   if (placeSelect) {
     placeSelect.innerHTML =
       `<option value="">כל היישובים</option>` +
-      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts2.get(pl) || 0})</option>`).join("");
+      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts.get(pl) || 0})</option>`).join("");
   }
 
   const ctx = canvas.getContext("2d");
