@@ -216,7 +216,9 @@ async function initField() {
   if (placeSelect) {
     placeSelect.innerHTML =
       `<option value="">כל היישובים</option>` +
-      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts2.get(pl) || 0})</option>`).join("");
+      // 'counts2' is used elsewhere in a different scope; here we want the
+      // per-place counts map defined above in this function.
+      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts.get(pl) || 0})</option>`).join("");
   }
 
   const ctx = canvas.getContext("2d");
