@@ -37,6 +37,11 @@ function escapeHtml(s) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+// For safe insertion into HTML attributes (e.g. data-*).
+function escapeAttr(s) {
+  return escapeHtml(s).replaceAll("`", "&#96;");
+}
 function safeDecodeURIComponent(s) {
   try {
     return decodeURIComponent(String(s));
