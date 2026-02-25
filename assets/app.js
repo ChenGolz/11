@@ -238,6 +238,44 @@ async function initField() {
     centers.set(pl, { ax: 0.5 + Math.cos(a)*R, ay: 0.52 + Math.sin(a)*R });
   });
 
+  // By default, showing every single person dot can become visually noisy.
+  // When no filters are selected, we render a cleaner "place summary" view:
+  // one bubble per place (size ~= number of people). Clicking a bubble (or
+  // selecting a place in the dropdown) switches back to detailed people view.
+  const isSummaryMode = () => {
+    const pl = (placeSelect?.value || "").trim();
+    const q = (searchInput?.value || "").trim();
+    return !pl && !q;
+  };
+
+  const buildSummaryNodes = () => {
+    const list = [];
+    for (const pl of places) {
+      const c = centers.get(pl);
+      if (!c) continue;
+      const cnt = counts.get(pl) || 0;
+
+      // radius in px: grows with sqrt(count), clamped
+      const rPx = Math.max(18, Math.min(68, 14 + Math.sqrt(cnt) * 7));
+
+      // slightly softer than person dots
+      const col = colorForPlace(pl).replace(/0\.95\)/, "0.70)");
+
+      list.push({
+        kind: "place",
+        id: pl,
+        place: pl,
+        name: pl,
+        count: cnt,
+        x: c.ax,
+        y: c.ay,
+        r: rPx / (w || 1000),
+        col
+      });
+    }
+    return list;
+  };
+
   let nodes = people.map((p) => {
     const c = centers.get(p.place) || { ax: 0.5, ay: 0.52 };
     const jx = (Math.random() - 0.5) * 0.18;
@@ -288,13 +326,22 @@ async function initField() {
   }
 
   function filteredNodes() {
-    const pl = placeSelect?.value || "";
+    const pl = (placeSelect?.value || "").trim();
     const q = (searchInput?.value || "").trim();
-    return nodes.filter(n => {
-      const okPlace = !pl || n.place === pl;
-      const okName = !q || n.name.includes(q);
-      return okPlace && okName;
-    });
+
+    // default: show per-place summary bubbles
+    if (isSummaryMode()) return buildSummaryNodes();
+
+    let arr = nodes;
+    if (pl) arr = arr.filter(n => n.place === pl);
+    if (q) {
+      const qq = q.toLowerCase();
+      arr = arr.filter(n =>
+        (n.name || "").toLowerCase().includes(qq) ||
+        (n.desc || "").toLowerCase().includes(qq)
+      );
+    }
+    return arr;
   }
 
   let hover = null;
@@ -302,47 +349,98 @@ async function initField() {
   function draw(ts) {
     ctx.clearRect(0,0,w,h);
 
-    const g = ctx.createRadialGradient(w*0.45,h*0.35, 0, w*0.55,h*0.55, Math.max(w,h)*0.85);
-    g.addColorStop(0, "rgba(37,99,235,0.08)");
-    g.addColorStop(1, "rgba(255,255,255,0.0)");
+    // Light, subtle background that works on both dark & light page themes
+    const g = ctx.createRadialGradient(w*0.48,h*0.40, 0, w*0.55,h*0.55, Math.max(w,h)*0.95);
+    g.addColorStop(0, "rgba(37,99,235,0.06)");
+    g.addColorStop(1, "rgba(0,0,0,0.00)");
     ctx.fillStyle = g;
     ctx.fillRect(0,0,w,h);
 
-
     const list = filteredNodes();
+    const summary = isSummaryMode();
 
-    ctx.globalAlpha = 0.22;
-    ctx.font = "12px system-ui, -apple-system, Segoe UI, Arial";
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    for (const pl of places) {
-      if (placeSelect?.value && placeSelect.value !== pl) continue;
-      const c = centers.get(pl);
-      ctx.fillText(pl, c.ax*w - 14, c.ay*h - 10);
+    const setA = (col, a) => col.replace(/0\.\d+\)/, `${a})`);
+
+    // labels
+    if (summary) {
+      ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255,255,255,0.74)";
+      ctx.shadowColor = "rgba(0,0,0,0.25)";
+      ctx.shadowBlur = 6;
+      for (const pl of places) {
+        const c = centers.get(pl);
+        if (!c) continue;
+        const cnt = counts.get(pl) || 0;
+        ctx.fillText(`${pl} · ${cnt}`, c.ax*w, c.ay*h);
+      }
+      ctx.shadowBlur = 0;
+      ctx.textAlign = "start";
+      ctx.textBaseline = "alphabetic";
+    } else {
+      ctx.globalAlpha = 0.34;
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Arial";
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.textAlign = "center";
+      for (const pl of places) {
+        if (placeSelect?.value && placeSelect.value !== pl) continue;
+        const c = centers.get(pl);
+        if (!c) continue;
+        ctx.fillText(pl, c.ax*w, c.ay*h - 12);
+      }
+      ctx.globalAlpha = 1;
+      ctx.textAlign = "start";
     }
-    ctx.globalAlpha = 1;
 
+    // dots / bubbles
     for (const n of list) {
       const x = n.x*w, y = n.y*h;
-      const pulse = 0.45 + 0.55*Math.sin((ts*0.002) + n.t);
-      const rr = (n.r*w) * (0.85 + pulse*0.25);
+      const pulse = 0.45 + 0.55*Math.sin((ts*0.002) + (n.t||0));
 
-      ctx.beginPath();
-      ctx.fillStyle = n.col.replace("0.95", "0.16");
-      ctx.arc(x, y, rr*6.2, 0, Math.PI*2);
-      ctx.fill();
+      if (n.kind === "place") {
+        const rr = (n.r*w) * (0.98 + pulse*0.06);
+        const glow = rr * 1.45;
+        const gg = ctx.createRadialGradient(x,y,rr*0.12,x,y,glow);
+        gg.addColorStop(0, setA(n.col, 0.85));
+        gg.addColorStop(1, setA(n.col, 0.06));
+        ctx.fillStyle = gg;
+        ctx.beginPath(); ctx.arc(x,y,glow,0,Math.PI*2); ctx.fill();
 
-      ctx.beginPath();
+        ctx.fillStyle = n.col;
+        ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill();
+
+        ctx.strokeStyle = "rgba(255,255,255,0.20)";
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.stroke();
+        continue;
+      }
+
+      const rr = (n.r*w) * (0.92 + pulse*0.18);
+      const outer = rr * 2.9;
+      const gg = ctx.createRadialGradient(x,y,rr*0.18,x,y,outer);
+      gg.addColorStop(0, setA(n.col, 0.70));
+      gg.addColorStop(1, setA(n.col, 0.05));
+      ctx.fillStyle = gg;
+      ctx.beginPath(); ctx.arc(x,y,outer,0,Math.PI*2); ctx.fill();
+
       ctx.fillStyle = n.col;
-      ctx.arc(x, y, rr, 0, Math.PI*2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill();
+
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.stroke();
     }
 
+    // hover ring
     if (hover) {
       const x = hover.x*w, y = hover.y*h;
+      const base = hover.r*w;
+      const ring = (hover.kind === "place") ? base * 1.55 : base * 3.2;
       ctx.beginPath();
       ctx.strokeStyle = "rgba(255,255,255,0.55)";
       ctx.lineWidth = 1;
-      ctx.arc(x, y, hover.r*w*7.0, 0, Math.PI*2);
+      ctx.arc(x, y, ring, 0, Math.PI*2);
       ctx.stroke();
     }
 
@@ -355,7 +453,8 @@ async function initField() {
     for (const n of list) {
       const x = n.x*w, y = n.y*h;
       const d = Math.hypot(mx-x, my-y);
-      const hit = (n.r*w) * 6.5;
+      const base = (n.r*w);
+      const hit = (n.kind === 'place') ? (base * 1.35) : (base * 3.2);
       if (d < hit && d < bestD) { best = n; bestD = d; }
     }
     return best;
@@ -363,7 +462,13 @@ async function initField() {
 
   function tooltipShow(n, mx, my) {
     if (!tooltip) return;
-    tooltip.innerHTML = `<strong>${escapeHtml(n.name)}</strong><span>${escapeHtml(n.place)}</span>`;
+    if (n.kind === 'place') {
+      tooltip.innerHTML = `<strong>${escapeHtml(n.place)}</strong>`
+        + `<span>${escapeHtml(String(n.count || 0))} אנשים</span>`
+        + `<div style="opacity:.75;font-size:12px;margin-top:4px">לחיצה כדי להיכנס</div>`;
+    } else {
+      tooltip.innerHTML = `<strong>${escapeHtml(n.name)}</strong><span>${escapeHtml(n.place)}</span>`;
+    }
     tooltip.style.left = mx + "px";
     tooltip.style.top = my + "px";
     tooltip.style.opacity = "1";
@@ -389,7 +494,13 @@ async function initField() {
     const mx = e.clientX - r.left;
     const my = e.clientY - r.top;
     const hit = pick(mx, my);
-    if (hit) location.href = `p/${encodeURIComponent(hit.id)}.html`;
+    if (!hit) return;
+    if (hit.kind === "place") {
+      placeSelect.value = hit.place;
+      placeSelect.dispatchEvent(new Event("change"));
+      return;
+    }
+    location.href = `p/${encodeURIComponent(hit.id)}.html`;
   });
 
   document.getElementById("goPeople")?.addEventListener("click", () => location.href = "people.html");
