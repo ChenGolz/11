@@ -90,12 +90,12 @@ function unique(arr) { return Array.from(new Set(arr)); }
 
 function colorForPlace(place) {
   const palette = [
-    "rgba(183,215,198,0.95)",
-    "rgba(200,193,178,0.95)",
-    "rgba(175,200,215,0.95)",
-    "rgba(215,195,175,0.95)",
-    "rgba(190,215,190,0.95)",
-    "rgba(215,210,185,0.95)"
+    "rgba(96,165,250,0.95)",
+    "rgba(59,130,246,0.95)",
+    "rgba(147,197,253,0.95)",
+    "rgba(99,102,241,0.95)",
+    "rgba(14,165,233,0.95)",
+    "rgba(125,211,252,0.95)"
   ];
   let h = 0;
   for (const ch of place) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -147,7 +147,7 @@ async function initField() {
   if (placeSelect) {
     placeSelect.innerHTML =
       `<option value="">כל היישובים</option>` +
-      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts.get(pl) || 0})</option>`).join("");
+      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts2.get(pl) || 0})</option>`).join("");
   }
 
   const ctx = canvas.getContext("2d");
@@ -339,7 +339,7 @@ async function initPeopleList() {
   if (placeSelect) {
     placeSelect.innerHTML =
       `<option value="">כל היישובים</option>` +
-      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts.get(pl) || 0})</option>`).join("");
+      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts2.get(pl) || 0})</option>`).join("");
   }
 
   function render() {

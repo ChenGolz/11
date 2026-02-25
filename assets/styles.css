@@ -22,8 +22,8 @@ body{
   font-family: system-ui, -apple-system, "Segoe UI", Arial, "Noto Sans Hebrew", sans-serif;
   color: var(--text);
   background:
-    radial-gradient(1200px 800px at 80% -10%, rgba(200,193,178,.16), transparent 60%),
-    radial-gradient(900px 700px at 10% 10%, rgba(183,215,198,.14), transparent 55%),
+    radial-gradient(1200px 800px at 80% -10%, rgba(147,197,253,.16), transparent 60%),
+    radial-gradient(900px 700px at 10% 10%, rgba(96,165,250,.14), transparent 55%),
     linear-gradient(180deg, #070b0b, var(--bg));
   overflow-x:hidden;
 }
@@ -66,8 +66,8 @@ a{ color: inherit; text-decoration:none; }
 .logo{
   width: 40px; height: 40px; border-radius: 14px;
   background:
-    radial-gradient(circle at 30% 30%, rgba(183,215,198,.90), rgba(183,215,198,.10) 58%, transparent 60%),
-    radial-gradient(circle at 70% 70%, rgba(200,193,178,.85), rgba(200,193,178,.10) 55%, transparent 58%),
+    radial-gradient(circle at 30% 30%, rgba(96,165,250,.90), rgba(96,165,250,.10) 58%, transparent 60%),
+    radial-gradient(circle at 70% 70%, rgba(147,197,253,.85), rgba(147,197,253,.10) 55%, transparent 58%),
     linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
   border: 1px solid rgba(255,255,255,.14);
 }
@@ -92,12 +92,12 @@ a{ color: inherit; text-decoration:none; }
   background: rgba(255,255,255,.03); border-radius:999px;
   font-size:13px; color: var(--muted); transition:.18s ease;
 }
-.pill:hover{ transform: translateY(-1px); border-color: rgba(183,215,198,.45); color: var(--text); }
-.pill.is-active{ color: var(--text); border-color: rgba(183,215,198,.55); background: rgba(183,215,198,.08); }
+.pill:hover{ transform: translateY(-1px); border-color: rgba(96,165,250,.45); color: var(--text); }
+.pill.is-active{ color: var(--text); border-color: rgba(96,165,250,.55); background: rgba(96,165,250,.08); }
 .cta{
   padding:10px 14px; border-radius:999px;
-  border:1px solid rgba(183,215,198,.40);
-  background: linear-gradient(135deg, rgba(183,215,198,.18), rgba(200,193,178,.14));
+  border:1px solid rgba(96,165,250,.40);
+  background: linear-gradient(135deg, rgba(96,165,250,.18), rgba(147,197,253,.14));
   font-weight:900; font-size:13px;
 }
 
@@ -123,8 +123,8 @@ input, select, textarea{
   color: var(--text); padding: 11px 12px; font-size: 14px; outline:none;
 }
 input:focus, select:focus, textarea:focus{
-  border-color: rgba(183,215,198,.45);
-  box-shadow: 0 0 0 4px rgba(183,215,198,.12);
+  border-color: rgba(96,165,250,.45);
+  box-shadow: 0 0 0 4px rgba(96,165,250,.12);
 }
 
 .btn{
@@ -133,10 +133,10 @@ input:focus, select:focus, textarea:focus{
   background: rgba(255,255,255,.03);
   font-weight: 900; font-size: 14px; transition: .18s ease;
 }
-.btn:hover{ transform: translateY(-1px); border-color: rgba(183,215,198,.40); }
+.btn:hover{ transform: translateY(-1px); border-color: rgba(96,165,250,.40); }
 .btn.primary{
-  border-color: rgba(183,215,198,.45);
-  background: linear-gradient(135deg, rgba(183,215,198,.18), rgba(200,193,178,.12));
+  border-color: rgba(96,165,250,.45);
+  background: linear-gradient(135deg, rgba(96,165,250,.18), rgba(147,197,253,.12));
 }
 .tiny{ font-size:12px; color: var(--muted); }
 
@@ -167,7 +167,7 @@ input:focus, select:focus, textarea:focus{
 .person-meta{ color: var(--muted); font-size: 13px; display:flex; gap: 10px; flex-wrap:wrap; }
 .person-card h3{ margin:0; font-size: 18px; }
 .person-card p{ margin:0; color: rgba(255,255,255,.80); line-height: 1.75; }
-.person-card .readmore{ margin-top:auto; color: rgba(183,215,198,.95); font-weight:1000; text-decoration: underline; }
+.person-card .readmore{ margin-top:auto; color: rgba(96,165,250,.95); font-weight:1000; text-decoration: underline; }
 
 .canvas-wrap{
   position: relative;
@@ -202,7 +202,7 @@ input:focus, select:focus, textarea:focus{
   border-radius: 18px;
   background:
     linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.06)),
-    linear-gradient(180deg, rgba(200,193,178,.18), rgba(183,215,198,.06));
+    linear-gradient(180deg, rgba(147,197,253,.18), rgba(96,165,250,.06));
   border: 1px solid rgba(255,255,255,.14);
   box-shadow: 0 18px 50px rgba(0,0,0,.55);
 }
@@ -254,7 +254,7 @@ input:focus, select:focus, textarea:focus{
 .article{ padding: 16px; }
 .article h3{ margin:0 0 8px; font-size: 16px; }
 .article p{ margin:0; color: rgba(255,255,255,.80); line-height: 1.75; }
-.article a{ text-decoration: underline; color: rgba(183,215,198,.95); }
+.article a{ text-decoration: underline; color: rgba(96,165,250,.95); }
 
 .site-footer{
   margin-top: 22px;
@@ -290,14 +290,14 @@ input:focus, select:focus, textarea:focus{
 }
 
 :focus-visible{
-  outline:2px solid rgba(183,215,198,.65);
+  outline:2px solid rgba(96,165,250,.65);
   outline-offset: 3px;
 }
 
 
 /* תיקון תצוגת קומבו בוקס (Chrome/Windows) */
 select option{
-  color: #0b1010;         /* טקסט כהה על רקע לבן של התפריט */
+  color: #0b1010;
   background: #ffffff;
 }
 
