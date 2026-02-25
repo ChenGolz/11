@@ -17,22 +17,12 @@ function getBackendConfig(){
 
 function isSupabaseReady(){
   const cfg = getBackendConfig();
-  if (!(cfg && cfg.provider === "supabase")) return false;
-  if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) return false;
-
-  // ברירת מחדל בתבנית כוללת placeholder — לא מפעילים עד שמגדירים באמת
-  const bad = (s) => /YOUR\-|your\-|YOUR_|your_|example|supabase\.co\/\/?$/.test(String(s));
-  if (bad(cfg.supabaseUrl) || bad(cfg.supabaseAnonKey)) return false;
-
-  return !!window.supabase;
+  return !!(cfg && cfg.provider === "supabase" && cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase);
 }
 
 function supa(){
   const cfg = getBackendConfig();
-  if (!window.__supaClient){
-    window.__supaClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  }
-  return window.__supaClient;
+  return window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
 }
 
 function qs(name) {
@@ -46,6 +36,70 @@ function escapeHtml(s) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+function safeDecodeURIComponent(s) {
+  try {
+    return decodeURIComponent(String(s));
+  } catch (e) {
+    return String(s);
+  }
+}
+
+/**
+ * Heuristic filter for "list pages" that only include the person's name among many others
+ * (e.g. "שמות ההרוגים", "Victims of...", tag/category pages).
+ * We hide these by default, but allow toggling them open.
+ */
+function isListOnlyArticle(article, personName) {
+  const title = String(article?.title || "");
+  const url = String(article?.url || "");
+  const decodedUrl = safeDecodeURIComponent(url);
+  const hay = `${title} ${decodedUrl}`;
+
+  const listTitleRe =
+    /(שמות\s+(?:ההרוגים|הנרצחים|החללים|הנופלים)|רשימת\s+(?:ההרוגים|הנרצחים|החללים|הנופלים)|כל\s+שמות|כל\s+ה(?:הרוגים|נרצחים|חללים|נופלים)|חללי\s+מלחמת|נופלי\s+מלחמת|הרוגי\s+מלחמת|Names?\s+of\s+the\s+(?:Fallen|Killed|Victims)|Victims?\s+of\s+(?:the\s+)?(?:War|Iron\s+Swords|Oct\.?\s*7))/i;
+
+  const listUrlRe =
+    /(\/tag\/|\/tags\/|\/category\/|\/archive\/|\/topics\/|\/projects\/.*victims|\/names|\/victims|\/fallen|\/killed|שמות-?(?:ההרוגים|הנרצחים|החללים|הנופלים))/i;
+
+  const looksListy = listTitleRe.test(hay) || listUrlRe.test(decodedUrl);
+  if (!looksListy) return false;
+
+  // If the article clearly contains the person's name (2+ tokens), keep it.
+  const tokens = String(personName || "")
+    .trim()
+    .split(/\s+/)
+    .filter((t) => t.length >= 2);
+
+  let hits = 0;
+  for (const t of tokens) {
+    if (title.includes(t) || decodedUrl.includes(t)) hits += 1;
+  }
+
+  return hits < 2;
+}
+function renderListOnlySection(listOnlyArticles) {
+  return `
+    <div class="muted tiny" style="margin-top: 14px;">
+      הוסתרו ${listOnlyArticles.length} קישורים שהם רשימות שמות ללא מידע על האדם.
+      <button type="button" id="toggle-list-only" class="badge" style="cursor:pointer; margin-inline-start:6px;">הצג</button>
+    </div>
+    <div id="list-only" style="display:none; margin-top: 10px;">
+      <div class="grid article-grid">
+        ${listOnlyArticles
+          .map(
+            (a) => `
+          <article class="card article">
+            <h3>${escapeHtml(a.title || a.source || a.url)}</h3>
+            ${a.source ? `<div class="meta">${escapeHtml(a.source)}</div>` : ""}
+            <a class="btn" href="${escapeAttr(a.url)}" target="_blank" rel="noopener">פתח קישור</a>
+          </article>
+        `
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
 }
 
 function setYear() {
@@ -157,7 +211,7 @@ async function initField() {
   if (placeSelect) {
     placeSelect.innerHTML =
       `<option value="">כל היישובים</option>` +
-      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts.get(pl) || 0})</option>`).join("");
+      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts2.get(pl) || 0})</option>`).join("");
   }
 
   const ctx = canvas.getContext("2d");
@@ -665,8 +719,16 @@ async function initPersonPage() {
 
   // ========= כתבות =========
   const articles = person.articles || [];
+    const listOnlyArticles = [];
+    const filteredArticles = articles.filter((a) => {
+      if (isListOnlyArticle(a, person.name)) {
+        listOnlyArticles.push(a);
+        return false;
+      }
+      return true;
+    });
   if (articlesRoot) {
-    if (!articles.length) {
+    if (!filteredArticles.length) {
       articlesRoot.innerHTML = `
         <div class="grid cols-2">
           <div class="card list">
@@ -704,7 +766,7 @@ async function initPersonPage() {
     } else {
       articlesRoot.innerHTML = `
         <div class="grid article-grid">
-          ${articles.map(a => `
+          ${filteredArticles.map(a => `
             <article class="card article">
               <h3>${escapeHtml(a.title || "כתבה")}</h3>
               <p class="muted">${escapeHtml(a.source || "")}${a.date ? " • " + escapeHtml(a.date) : ""}</p>
@@ -714,6 +776,20 @@ async function initPersonPage() {
         </div>
       `;
     }
+    if (listOnlyArticles.length) {
+      articlesRoot.insertAdjacentHTML("beforeend", renderListOnlySection(listOnlyArticles));
+      const toggle = document.getElementById("toggle-list-only");
+      if (toggle) {
+        toggle.addEventListener("click", () => {
+          const box = document.getElementById("list-only");
+          if (!box) return;
+          const isHidden = box.style.display === "none" || box.style.display === "";
+          box.style.display = isHidden ? "block" : "none";
+          toggle.textContent = isHidden ? "הסתר" : "הצג";
+        });
+      }
+    }
+
   }
 }
 
