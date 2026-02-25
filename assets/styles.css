@@ -1,10 +1,10 @@
 :root{
-  --bg:#0b1010;
-  --panel: rgba(255,255,255,.06);
-  --panel2: rgba(255,255,255,.10);
+  --bg:#06162e;
+  --panel: rgba(147,197,253,.10);
+  --panel2: rgba(96,165,250,.26);
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.72);
-  --line: rgba(255,255,255,.14);
+  --line: rgba(147,197,253,.22);
 
   --accent: #60a5fa;
   --accent2:#93c5fd;
@@ -22,9 +22,9 @@ body{
   font-family: system-ui, -apple-system, "Segoe UI", Arial, "Noto Sans Hebrew", sans-serif;
   color: var(--text);
   background:
-    radial-gradient(1200px 800px at 80% -10%, rgba(147,197,253,.16), transparent 60%),
-    radial-gradient(900px 700px at 10% 10%, rgba(96,165,250,.14), transparent 55%),
-    linear-gradient(180deg, #070b0b, var(--bg));
+    radial-gradient(1200px 800px at 80% -10%, rgba(147,197,253,.30), transparent 60%),
+    radial-gradient(900px 700px at 10% 10%, rgba(96,165,250,.26), transparent 55%),
+    linear-gradient(180deg, #0b2a5a, var(--bg));
   overflow-x:hidden;
 }
 
