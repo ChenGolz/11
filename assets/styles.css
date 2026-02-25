@@ -6,8 +6,8 @@
   --muted: rgba(255,255,255,.72);
   --line: rgba(255,255,255,.14);
 
-  --accent: #b7d7c6;
-  --accent2:#c8c1b2;
+  --accent: #60a5fa;
+  --accent2:#93c5fd;
 
   --shadow: 0 18px 60px rgba(0,0,0,.45);
   --radius: 18px;
@@ -292,4 +292,20 @@ input:focus, select:focus, textarea:focus{
 :focus-visible{
   outline:2px solid rgba(183,215,198,.65);
   outline-offset: 3px;
+}
+
+
+/* תיקון תצוגת קומבו בוקס (Chrome/Windows) */
+select option{
+  color: #0b1010;         /* טקסט כהה על רקע לבן של התפריט */
+  background: #ffffff;
+}
+
+
+/* Theme overrides (כחול) */
+.logo{
+  background:
+    radial-gradient(circle at 30% 30%, rgba(96,165,250,.92), rgba(96,165,250,.10) 58%, transparent 60%),
+    radial-gradient(circle at 70% 70%, rgba(147,197,253,.88), rgba(147,197,253,.10) 55%, transparent 58%),
+    linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
 }

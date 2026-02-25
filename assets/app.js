@@ -140,12 +140,14 @@ async function initField() {
   if (!canvas || !wrap) return;
 
   const people = await loadPeople();
+  const counts = new Map();
+  for (const p of people) counts.set(p.place, (counts.get(p.place) || 0) + 1);
   const places = unique(people.map(p => p.place)).sort((a,b)=>a.localeCompare(b,"he"));
 
   if (placeSelect) {
     placeSelect.innerHTML =
       `<option value="">כל היישובים</option>` +
-      places.map(pl => `<option>${escapeHtml(pl)}</option>`).join("");
+      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts.get(pl) || 0})</option>`).join("");
   }
 
   const ctx = canvas.getContext("2d");
@@ -330,12 +332,14 @@ async function initPeopleList() {
   if (!root) return;
 
   const people = await loadPeople();
+  const counts2 = new Map();
+  for (const p of people) counts2.set(p.place, (counts2.get(p.place) || 0) + 1);
   const places = unique(people.map(p=>p.place)).sort((a,b)=>a.localeCompare(b,"he"));
 
   if (placeSelect) {
     placeSelect.innerHTML =
       `<option value="">כל היישובים</option>` +
-      places.map(pl => `<option>${escapeHtml(pl)}</option>`).join("");
+      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts.get(pl) || 0})</option>`).join("");
   }
 
   function render() {
@@ -445,6 +449,7 @@ async function initPersonPage() {
   const candle = document.getElementById("candle");
   const candleCount = document.getElementById("candleCount");
   const candleBtn = document.getElementById("candleBtn");
+  const shareBtn = document.getElementById("shareBtn");
   const guestList = document.getElementById("guestList");
   const guestForm = document.getElementById("guestForm");
   const articlesRoot = document.getElementById("articlesRoot");
@@ -467,6 +472,18 @@ async function initPersonPage() {
     backendNote.textContent = usingShared
       ? "מצב משותף פעיל: נרות ומילים נשמרים לכל המבקרים (בכפוף לאישור)."
       : "מצב מקומי: נרות ומילים נשמרים רק במכשיר שלך. כדי לשתף לכולם – חבר/י Supabase (ראה אודות).";
+
+  // העתקת קישור (נוח לשיתוף)
+  shareBtn?.addEventListener("click", async () => {
+    try{
+      await navigator.clipboard.writeText(location.href);
+      shareBtn.textContent = "הועתק!";
+      setTimeout(()=> shareBtn.textContent = "העתקת קישור", 1200);
+    }catch{
+      // fallback
+      prompt("העתיקו את הקישור:", location.href);
+    }
+  });
   }
 
   // ========= נרות =========
