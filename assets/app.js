@@ -42,6 +42,13 @@ function escapeHtml(s) {
 function escapeAttr(s) {
   return escapeHtml(s).replaceAll("`", "&#96;");
 }
+function initialOfName(name) {
+  const s = String(name ?? "")
+    .replace(/["'״׳`]/g, "")
+    .trim();
+  return s ? s.slice(0, 1) : "•";
+}
+
 function safeDecodeURIComponent(s) {
   try {
     return decodeURIComponent(String(s));
@@ -295,11 +302,12 @@ async function initField() {
   function draw(ts) {
     ctx.clearRect(0,0,w,h);
 
-    const g = ctx.createRadialGradient(w*0.5,h*0.4, 0, w*0.5,h*0.55, Math.max(w,h)*0.8);
-    g.addColorStop(0, "rgba(255,255,255,0.06)");
-    g.addColorStop(1, "rgba(0,0,0,0.0)");
+    const g = ctx.createRadialGradient(w*0.45,h*0.35, 0, w*0.55,h*0.55, Math.max(w,h)*0.85);
+    g.addColorStop(0, "rgba(37,99,235,0.08)");
+    g.addColorStop(1, "rgba(255,255,255,0.0)");
     ctx.fillStyle = g;
     ctx.fillRect(0,0,w,h);
+
 
     const list = filteredNodes();
 
@@ -422,14 +430,26 @@ async function initPeopleList() {
       return okPlace && okName;
     });
 
-    root.innerHTML = list.map(p => `
+    root.innerHTML = list.map(p => {
+      const place = p.place ? `יישוב: ${escapeHtml(p.place)}` : "";
+      const initial = initialOfName(p.name);
+      const context = p.context ? escapeHtml(p.context) : "";
+      return `
       <article class="card person-card">
-        <div class="person-meta"><span>יישוב: ${escapeHtml(p.place)}</span><span>דף אישי</span></div>
-        <h3>${escapeHtml(p.name)}</h3>
-        <p class="muted">לחיצה לפתיחת ספר זיכרון.</p>
-        <a class="readmore" href="p/${encodeURIComponent(p.id)}.html">לספר הזיכרון →</a>
-      </article>
-    `).join("");
+        <div class="person-main">
+          <div class="person-avatar" aria-hidden="true">${escapeHtml(initial)}</div>
+          <div class="person-info">
+            <div class="person-meta">${place}</div>
+            <h3 class="person-name">${escapeHtml(p.name)}</h3>
+            ${context ? `<div class="small">${context}</div>` : ``}
+          </div>
+        </div>
+        <div class="person-art" title="כאן אפשר להוסיף איור בהמשך">מקום לאיור</div>
+        <div class="person-cta">
+          <a class="btn primary" href="p/${escapeHtml(p.id)}.html">לפתיחה</a>
+        </div>
+      </article>`;
+    }).join("");
 
     const count = document.getElementById("peopleCount");
     if (count) count.textContent = `${list.length} מתוך ${people.length}`;
