@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="../">
+  <meta name="description" content="אתר הנצחה – דף יישוב." />
+  <title>אתר הנצחה | נחל עוז</title>
+
+  <script>
+    window.PLACE_NAME = "נחל עוז";
+  </script>
+
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script defer src="assets/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">דלג לתוכן</a>
+
+  <header class="site-header">
+    <div class="wrap nav">
+      <a class="brand" href="index.html" aria-label="דף הבית">
+        <span class="logo" aria-hidden="true"></span>
+        <span class="brand-title">
+          <strong>אתר הנצחה</strong>
+          <span>לאלו שנלקחו מאיתנו • 7.10.2023</span>
+        </span>
+      </a>
+
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr">פתח תפריט</span>
+        <span class="menu-lines" aria-hidden="true"></span>
+      </button>
+
+      <nav id="site-nav" class="site-nav" aria-label="ניווט">
+        <a class="pill" href="index.html">שדה האורות</a>
+        <a class="pill" href="people.html">כל האנשים</a>
+        <a class="pill is-active" href="places.html">יישובים</a>
+        <a class="pill" href="about.html">אודות</a>
+        <a class="cta" href="about.html#how">איך מוסיפים תכנים</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="wrap">
+        <div class="card">
+          <div class="breadcrumbs"><a href="places.html" style="text-decoration:underline;">יישובים</a> / דף יישוב</div>
+          <h1 class="page-title" id="placeTitle">נחל עוז</h1>
+          <p class="page-sub" id="placeSub"></p>
+          <p class="muted" id="placeIntro" style="margin-top:10px; line-height:1.85;"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap grid people-grid" id="placePeople"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-bottom">
+      <span>© <span id="y"></span> אתר הנצחה</span>
+      <span class="muted">דף יישוב</span>
+    </div>
+  </footer>
+</body>
+</html>
