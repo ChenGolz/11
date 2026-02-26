@@ -441,3 +441,201 @@ main{padding:10px 0 44px;}
   .canvas-wrap canvas{height:440px}
   .page-title{font-size:26px}
 }
+
+/* =========================================================
+   Premium Theme A ("מושקע") – warm paper + elegant ink
+   Appends overrides so you can revert easily.
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@400;600;700;800&display=swap');
+
+:root{
+  --bg0:#fbf7f1;
+  --bg1:#f4ede3;
+  --panel:rgba(255,255,255,.82);
+  --panel2:rgba(255,255,255,.92);
+  --ink:#0f172a;
+  --muted:#475569;
+  --line:rgba(15,23,42,.12);
+  --shadow:0 18px 50px rgba(15,23,42,.10);
+  --shadow2:0 8px 22px rgba(15,23,42,.10);
+  --radius:22px;
+  --radius2:16px;
+  --accent:#b45309;   /* warm amber */
+  --accent2:#0ea5a5;  /* teal */
+  --accent3:#2563eb;  /* blue */
+  --focus:0 0 0 3px rgba(180,83,9,.22);
+}
+
+html{scroll-behavior:smooth}
+body{
+  font-family:Heebo, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 800px at 10% 0%, rgba(180,83,9,.10), transparent 60%),
+    radial-gradient(900px 700px at 90% 10%, rgba(14,165,165,.10), transparent 60%),
+    linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 60%, #efe7dc 100%);
+  position:relative;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image:url('noise.png');
+  opacity:.06;
+  mix-blend-mode:multiply;
+}
+
+h1,h2,h3,.hero-title,.section-title{
+  font-family:"Frank Ruhl Libre", serif;
+  letter-spacing:.2px;
+}
+
+/* Top bar: glass paper */
+.topbar{
+  background:rgba(255,255,255,.68);
+  border-bottom:1px solid var(--line);
+  backdrop-filter:saturate(1.2) blur(10px);
+}
+.brand h1{font-weight:800}
+.brand .subtitle{color:var(--muted)}
+
+.nav a{
+  background:rgba(255,255,255,.55);
+  border:1px solid rgba(15,23,42,.10);
+  box-shadow:0 6px 18px rgba(15,23,42,.06);
+}
+.nav a:hover{transform:translateY(-1px)}
+.nav a.active{border-color:rgba(180,83,9,.35);background:rgba(180,83,9,.08)}
+
+/* Panels & cards */
+.panel{background:transparent}
+.card{
+  background:var(--panel);
+  border:1px solid rgba(15,23,42,.10);
+  box-shadow:var(--shadow2);
+}
+.card:hover{transform:translateY(-2px)}
+
+/* Buttons */
+.btn.primary{
+  background:linear-gradient(135deg, rgba(180,83,9,1), rgba(217,119,6,1));
+  color:white;
+  border:1px solid rgba(180,83,9,.35);
+  box-shadow:0 14px 30px rgba(180,83,9,.18);
+}
+.btn.primary:hover{transform:translateY(-1px);filter:saturate(1.06)}
+.btn.ghost{background:rgba(255,255,255,.62);border-color:rgba(15,23,42,.12)}
+.btn:focus-visible{outline:none;box-shadow:var(--focus)}
+
+/* Pills */
+.pill{
+  background:rgba(180,83,9,.06);
+  border-color:rgba(180,83,9,.18);
+  color:rgba(15,23,42,.78);
+}
+.pill:hover{background:rgba(180,83,9,.10);border-color:rgba(180,83,9,.26)}
+.pill.active{background:rgba(180,83,9,.14);border-color:rgba(180,83,9,.34)}
+
+/* Hero */
+.hero{
+  background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.15));
+  border:1px solid rgba(15,23,42,.10);
+}
+.hero::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(700px 260px at 50% -20%, rgba(180,83,9,.22), transparent 70%);
+  opacity:.55;
+}
+
+/* Canvas frame */
+.canvas-wrap{
+  background:linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.44));
+  border:1px solid rgba(15,23,42,.12);
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+}
+.canvas-wrap::before{
+  content:"";
+  position:absolute;
+  inset:10px;
+  border-radius:24px;
+  border:1px dashed rgba(180,83,9,.18);
+  pointer-events:none;
+}
+#fieldCanvas{border-radius:18px}
+
+/* Legend chips */
+.legend .chip{
+  background:rgba(255,255,255,.76);
+  border:1px solid rgba(15,23,42,.10);
+}
+
+/* People cards: more special */
+.person-card{
+  background:var(--panel2);
+  border:1px solid rgba(15,23,42,.12);
+  box-shadow:0 16px 34px rgba(15,23,42,.10);
+  position:relative;
+  overflow:hidden;
+}
+.person-card::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:28px;
+  background:radial-gradient(600px 240px at 15% 0%, rgba(180,83,9,.16), transparent 60%),
+             radial-gradient(520px 240px at 85% 10%, rgba(14,165,165,.14), transparent 60%);
+  opacity:.55;
+  pointer-events:none;
+}
+.person-card .person-top{position:relative}
+.person-card .avatar{
+  border:1px solid rgba(15,23,42,.12);
+  box-shadow:0 10px 24px rgba(15,23,42,.12);
+}
+.person-card h3{font-family:"Frank Ruhl Libre", serif}
+.person-card .person-ill{
+  border:1px dashed rgba(180,83,9,.28);
+  background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.35));
+}
+
+/* Forms: alignment polish */
+.form-card{
+  background:var(--panel2);
+  border:1px solid rgba(15,23,42,.12);
+}
+.form-row{align-items:flex-end}
+.form-card input,
+.form-card textarea{
+  background:rgba(255,255,255,.82);
+  border:1px solid rgba(15,23,42,.14);
+}
+.form-card input:focus,
+.form-card textarea:focus{outline:none;box-shadow:var(--focus);border-color:rgba(180,83,9,.35)}
+
+/* Person page tweaks */
+.person-hero{
+  background:linear-gradient(180deg, rgba(255,255,255,.76), rgba(255,255,255,.34));
+  border:1px solid rgba(15,23,42,.10);
+}
+.candle-wrap{filter:drop-shadow(0 10px 14px rgba(15,23,42,.12))}
+
+/* Footer */
+footer{
+  background:transparent;
+  border-top:1px solid rgba(15,23,42,.10);
+  color:rgba(15,23,42,.70);
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+
+:root{--stroke:rgba(15,23,42,.12);--stroke2:rgba(15,23,42,.08);} 
+

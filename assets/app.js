@@ -364,11 +364,11 @@ async function initField() {
     // labels
     if (summary) {
       // Larger summary label for better readability
-      ctx.font = "700 16px system-ui, -apple-system, Segoe UI, Arial";
+      ctx.font = "800 16px Heebo, system-ui, -apple-system, Segoe UI, Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = "rgba(255,255,255,0.74)";
-      ctx.shadowColor = "rgba(0,0,0,0.25)";
+      ctx.fillStyle = "rgba(17,24,39,0.78)";
+      ctx.shadowColor = "rgba(15,23,42,0.10)";
       ctx.shadowBlur = 6;
       for (const pl of places) {
         const c = centers.get(pl);
@@ -382,8 +382,8 @@ async function initField() {
     } else {
       ctx.globalAlpha = 0.34;
       // Larger cluster label for place names
-      ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Arial";
-      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.font = "700 16px Heebo, system-ui, -apple-system, Segoe UI, Arial";
+      ctx.fillStyle = "rgba(17,24,39,0.72)";
       ctx.textAlign = "center";
       for (const pl of places) {
         if (placeSelect?.value && placeSelect.value !== pl) continue;
@@ -402,19 +402,32 @@ async function initField() {
 
       if (n.kind === "place") {
         const rr = (n.r*w) * (0.98 + pulse*0.06);
-        const glow = rr * 1.45;
-        const gg = ctx.createRadialGradient(x,y,rr*0.12,x,y,glow);
-        gg.addColorStop(0, setA(n.col, 0.85));
-        gg.addColorStop(1, setA(n.col, 0.06));
+        const glow = rr * 1.75;
+
+        // soft glow
+        const gg = ctx.createRadialGradient(x,y,rr*0.10,x,y,glow);
+        gg.addColorStop(0, setA(n.col, 0.32));
+        gg.addColorStop(1, setA(n.col, 0.00));
         ctx.fillStyle = gg;
         ctx.beginPath(); ctx.arc(x,y,glow,0,Math.PI*2); ctx.fill();
 
-        ctx.fillStyle = n.col;
+        // main bubble (lighter fill + colored stroke)
+        ctx.shadowColor = setA(n.col, 0.18);
+        ctx.shadowBlur = 18;
+        ctx.shadowOffsetY = 10;
+        ctx.fillStyle = setA(n.col, 0.16);
         ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.fill();
 
-        ctx.strokeStyle = "rgba(255,255,255,0.20)";
-        ctx.lineWidth = 1;
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.strokeStyle = setA(n.col, 0.55);
+        ctx.lineWidth = Math.max(1, rr*0.06);
         ctx.beginPath(); ctx.arc(x,y,rr,0,Math.PI*2); ctx.stroke();
+
+        // core dot
+        ctx.fillStyle = setA(n.col, 0.92);
+        ctx.beginPath(); ctx.arc(x,y,Math.max(3, rr*0.11),0,Math.PI*2); ctx.fill();
         continue;
       }
 
@@ -440,7 +453,7 @@ async function initField() {
       const base = hover.r*w;
       const ring = (hover.kind === "place") ? base * 1.55 : base * 3.2;
       ctx.beginPath();
-      ctx.strokeStyle = "rgba(255,255,255,0.55)";
+      ctx.strokeStyle = "rgba(180,83,9,0.55)";
       ctx.lineWidth = 1;
       ctx.arc(x, y, ring, 0, Math.PI*2);
       ctx.stroke();
