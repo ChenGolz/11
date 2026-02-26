@@ -570,7 +570,10 @@ async function initPeopleList() {
             ${context ? `<div class="small">${context}</div>` : ``}
           </div>
         </div>
-        <div class="person-art" title="כאן אפשר להוסיף איור בהמשך">מקום לאיור</div>
+        <div class="person-art" title="כאן אפשר להוסיף איור/ציור קווי בהמשך">
+          <div class="art-initials">${escapeHtml(initial)}</div>
+          <div class="art-hint">איור</div>
+        </div>
         <div class="person-cta">
           <a class="btn primary" href="p/${escapeHtml(p.id)}.html">לפתיחה</a>
         </div>
@@ -600,7 +603,7 @@ async function initPlaces() {
   const places = Array.from(map.entries()).sort((a,b)=>a[0].localeCompare(b[0],"he"));
 
   root.innerHTML = places.map(([pl, n]) => `
-    <article class="card person-card">
+    <article class="card place-card">
       <div class="person-meta"><span>יישוב</span><span>${n} אנשים</span></div>
       <h3>${escapeHtml(pl)}</h3>
       <p class="muted">עמוד שמרכז את כולם יחד תחת היישוב.</p>
