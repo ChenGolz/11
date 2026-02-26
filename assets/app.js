@@ -363,7 +363,8 @@ async function initField() {
 
     // labels
     if (summary) {
-      ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Arial";
+      // Larger summary label for better readability
+      ctx.font = "700 16px system-ui, -apple-system, Segoe UI, Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = "rgba(255,255,255,0.74)";
@@ -380,7 +381,8 @@ async function initField() {
       ctx.textBaseline = "alphabetic";
     } else {
       ctx.globalAlpha = 0.34;
-      ctx.font = "12px system-ui, -apple-system, Segoe UI, Arial";
+      // Larger cluster label for place names
+      ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Arial";
       ctx.fillStyle = "rgba(255,255,255,0.85)";
       ctx.textAlign = "center";
       for (const pl of places) {
