@@ -11,7 +11,7 @@
    - העתיקו **anon public key**
 
 ## 2) קונפיגורציה באתר
-פתחו `assets/backend-config.js` והדביקו:
+פתחו `public/assets/backend-config.js` והדביקו:
 - `supabaseUrl`
 - `supabaseAnonKey`
 

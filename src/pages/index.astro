@@ -1,0 +1,59 @@
+---
+import Layout from '../layouts/Layout.astro';
+const title = 'אתר הנצחה | שדה אורות';
+const description = 'אתר הנצחה לאלו שנלקחו מאיתנו בשביעי באוקטובר 2023';
+---
+
+<Layout title={title} description={description} ogTitle="לזכרם - אתר הנצחה" ogDescription="מנציחים את זכרם של הנופלים והנרצחים." ogImage="/assets/og-share-image.jpg" active='field'>
+<section class="hero">
+      <div class="wrap">
+        <div class="home-grid">
+        <div class="card paper">
+          <div class="kicker">תצוגה אינטראקטיבית • לחצו על נקודת אור לפתיחת דף אישי</div>
+          <h1>שדה אורות</h1>
+          <p class="lead">
+            כל נקודת אור היא אדם. הנקודות מתקבצות לפי יישוב, ומאפשרות התבוננות שקטה.
+            ניתן לסנן לפי יישוב או לחפש לפי שם. לחיצה על נקודה פותחת ספר זיכרון אישי.
+          </p>
+
+          <div class="controls" aria-label="מסננים">
+            <label class="sr" for="filterPlace">יישוב</label>
+            <select id="filterPlace"><option>טוען…</option></select>
+
+            <label class="sr" for="searchName">חיפוש לפי שם</label>
+            <input id="searchName" placeholder="חיפוש שם (לדוגמה: אופיר)" />
+
+            <button id="goPeople" class="btn">רשימה מלאה</button>
+            <button id="goPlaces" class="btn primary">דפי יישובים</button>
+          </div>
+
+          <div class="badges" aria-label="עקרונות">
+            <span class="badge">כל אדם — נקודת אור</span>
+            <span class="badge">קיבוץ לפי יישוב</span>
+            <span class="badge">דף אישי</span>
+            <span class="badge">נר + מילים</span>
+          </div>
+
+          <p class="tiny" id="fatal" aria-live="polite"></p>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas id="field" tabindex="0" aria-label="שדה אורות אינטראקטיבי"></canvas>
+          <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
+
+          <!-- a11y: אלטרנטיבה טקסטואלית לקנבס עבור קוראי מסך -->
+          <nav class="sr-only" aria-label="רשימת חללים (אלטרנטיבה לקנבס)">
+            <h2>רשימת חללים</h2>
+            <p>רשימה טקסטואלית של שמות, עם קישורים לדפי הזיכרון.</p>
+            <ul id="a11yList"></ul>
+          </nav>
+        </div>
+
+        </div>
+
+        <p class="tiny muted" style="margin-top:12px;">
+          הערה: האתר הוא תבנית. תוכן אישי/תמונות/כתבות יפורסמו רק בתיאום ואישור מתאים.
+        </p>
+      </div>
+    </section>
+</Layout>

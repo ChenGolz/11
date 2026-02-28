@@ -1,0 +1,13 @@
+{
+  "name": "memorial-site-moonlit-teal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && node scripts/minify-html.mjs",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^5.18.0"
+  }
+}

@@ -1,0 +1,26 @@
+---
+import Layout from '../layouts/Layout.astro';
+const title = 'כל האנשים | אתר הנצחה';
+const description = 'דף שמרכז את כל דפי הזיכרון באתר, כולל חיפוש וסינון.';
+---
+
+<Layout title={title} description={description} active='people'>
+<section class="page-hero">
+      <div class="wrap">
+        <div class="card">
+          <div class="breadcrumbs">דף הבית / כל האנשים</div>
+          <h1 class="page-title">כל האנשים</h1>
+          <p class="page-sub">חיפוש וסינון לפי יישוב. <span class="muted" id="peopleCount"></span></p>
+          <div class="controls" style="margin-top:12px;">
+            <input id="peopleSearch" placeholder="חיפוש לפי שם" />
+            <select id="peoplePlace"><option value="">טוען…</option></select>
+          </div>
+          <div id="peoplePager" class="pager" aria-label="דפדוף"></div>
+        </div>
+      </div>
+    </section
+
+    <section class="section">
+      <div class="wrap grid people-grid" id="peopleRoot"></div>
+    </section>
+</Layout>

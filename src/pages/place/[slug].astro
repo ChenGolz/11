@@ -1,0 +1,62 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import fs from 'node:fs/promises';
+
+const escapeHtml = (s='') => String(s)
+  .replaceAll('&','&amp;')
+  .replaceAll('<','&lt;')
+  .replaceAll('>','&gt;')
+  .replaceAll('"','&quot;')
+  .replaceAll("'",'&#39;');
+
+const legacyPlace = await fs.readFile(new URL('../../../legacy/static/place.html', import.meta.url), 'utf-8');
+const m = legacyPlace.match(/<main[^>]*id="main"[^>]*>([\s\S]*?)<\/main>/i);
+const baseInnerRaw = (m?.[1] ?? '').trim();
+
+const normalizeInner = (inner) => {
+  for (const f of ['index.html','about.html','people.html','places.html','person.html','place.html']) {
+    inner = inner.replaceAll(`href="${f}"`, `href="/${f}"`);
+  }
+  inner = inner.replaceAll('href="p/', 'href="/p/');
+  inner = inner.replaceAll('href="place/', 'href="/place/');
+  inner = inner.replaceAll('src="assets/', 'src="/assets/');
+  inner = inner.replaceAll('href="assets/', 'href="/assets/');
+  inner = inner.replaceAll('src="data/', 'src="/data/');
+  inner = inner.replaceAll('href="data/', 'href="/data/');
+  return inner;
+};
+
+const placeSlug = (place) => {
+  const map = {
+    'ארז':'arez',
+    'גבים':'gavim',
+    'יכיני':'yakhini',
+    'כפר עזה':'kfar-aza',
+    'נחל עוז':'nahal-oz',
+    'ניר עם':'nir-am'
+  };
+  return map[place] || encodeURIComponent(place);
+};
+
+export async function getStaticPaths() {
+  const peopleJson = await fs.readFile(new URL('../../../public/data/people.json', import.meta.url), 'utf-8');
+  const people = JSON.parse(peopleJson);
+  const places = Array.from(new Set(people.map(p => p.place).filter(Boolean)));
+  return places.map((pl) => ({ params: { slug: placeSlug(pl) }, props: { place: pl } }));
+}
+
+const { place } = Astro.props;
+const title = `לזכרם | ${place ?? 'דף יישוב'}`;
+const description = `עמוד יישוב שמרכז יחד את דפי הזיכרון של קהילת ${place ?? ''}.`;
+
+let inner = normalizeInner(baseInnerRaw);
+inner = inner.replace(
+  /(<h1[^>]*id="placeTitle"[^>]*>)([\s\S]*?)(<\/h1>)/i,
+  `$1${escapeHtml(place ?? '')}$3`
+);
+---
+
+<Layout title={title} description={description} ogTitle={title} ogDescription={description} ogImage="/assets/og-share-image.jpg" active="places">
+  <script is:inline>{`window.PLACE_NAME = ${JSON.stringify(place)};`}</script>
+  <Fragment set:html={inner} />
+</Layout>

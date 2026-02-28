@@ -1,0 +1,118 @@
+---
+import { SITE } from '../lib/site.js';
+
+const {
+  title = `${SITE.name} - ${SITE.brand}`,
+  description = SITE.description,
+  ogTitle = `${SITE.name} - ${SITE.brand}`,
+  ogDescription = SITE.description,
+  ogImage = SITE.ogImage,
+  active = 'field',
+  ogType = 'website'
+} = Astro.props;
+
+const abs = (p) => {
+  try { if (Astro.site) return new URL(p, Astro.site).toString(); } catch {}
+  return p;
+};
+
+const ogUrl = abs(Astro.url.pathname.replace(/\/$/, '') || '/');
+const canonical = ogUrl;
+const navClass = (key) => (active === key ? 'pill is-active' : 'pill');
+
+const supabasePreconnect = (() => {
+  try {
+    const raw = import.meta.env.PUBLIC_SUPABASE_URL;
+    if (!raw) return null;
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+})();
+---
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+
+    <!-- Performance -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    {supabasePreconnect ? <link rel="preconnect" href={supabasePreconnect} crossorigin /> : null}
+    <!-- Tip: you can set PUBLIC_SUPABASE_URL in .env for build-time preconnect. app.js also adds it at runtime when configured. -->
+
+    <!-- Open Graph / Social -->
+    <meta property="og:locale" content="he_IL" />
+    <meta property="og:site_name" content={SITE.brand} />
+    <meta property="og:title" content={ogTitle} />
+    <meta property="og:description" content={ogDescription} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:image" content={abs(ogImage)} />
+    <meta property="og:url" content={ogUrl} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={ogTitle} />
+    <meta name="twitter:description" content={ogDescription} />
+    <meta name="twitter:image" content={abs(ogImage)} />
+
+    <link rel="canonical" href={canonical} />
+
+    <link rel="stylesheet" href="/assets/styles.css" />
+
+    <script defer src="/assets/app.js"></script>
+    <script defer src="/assets/premium.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">דלג לתוכן</a>
+
+    <header class="site-header">
+      <div class="wrap nav">
+        <a class="brand" href="/index.html" aria-label="דף הבית">
+          <span class="logo" aria-hidden="true"></span>
+          <span class="brand-title">
+            <strong>{SITE.brand}</strong>
+            <span>{SITE.tagline}</span>
+          </span>
+        </a>
+
+        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">
+          <span class="sr">פתח תפריט</span>
+          <span class="menu-lines" aria-hidden="true"></span>
+        </button>
+
+        <nav id="site-nav" class="site-nav" aria-label="ניווט">
+          <a class={navClass('field')} href="/index.html">שדה האורות</a>
+          <a class={navClass('people')} href="/people.html">כל האנשים</a>
+          <a class={navClass('places')} href="/places.html">יישובים</a>
+          <a class={navClass('about')} href="/about.html">אודות</a>
+          <a class="cta" href="/about.html#how">איך מוסיפים תכנים</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-bottom">
+        <!-- Static (so crawlers and JS-disabled users still see it). app.js will enhance audio toggle. -->
+        <div class="footer-support">
+          <strong>תמיכה נפשית:</strong>
+          <a href="tel:1201" aria-label="ער״ן 1201">ער״ן – 1201</a>
+          <a href="tel:*3362" aria-label="נט״ל כוכבית 3362">נט״ל – ‎*3362</a>
+          <button type="button" id="audioToggle" class="audio-toggle" aria-pressed="false" aria-label="הפעלת/כיבוי סאונד אווירה">
+            <span aria-hidden="true">🔇</span><span>סאונד</span>
+          </button>
+          <span class="hint">אם את/ה במצוקה מיידית — פנו למוקד חירום מקומי.</span>
+        </div>
+
+        <span>© <span id="y"></span> {SITE.brand}</span>
+        <span class="muted">תצוגה שקטה לזיכרון ולהתבוננות</span>
+      </div>
+    </footer>
+  </body>
+</html>

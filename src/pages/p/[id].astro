@@ -1,0 +1,66 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import fs from 'node:fs/promises';
+
+const escapeHtml = (s='') => String(s)
+  .replaceAll('&','&amp;')
+  .replaceAll('<','&lt;')
+  .replaceAll('>','&gt;')
+  .replaceAll('"','&quot;')
+  .replaceAll("'",'&#39;');
+
+const legacyPerson = await fs.readFile(new URL('../../../legacy/static/person.html', import.meta.url), 'utf-8');
+const m = legacyPerson.match(/<main[^>]*id="main"[^>]*>([\s\S]*?)<\/main>/i);
+const baseInnerRaw = (m?.[1] ?? '').trim();
+
+const normalizeInner = (inner) => {
+  // Base href is set to / in Layout, but keep the HTML safe even without it.
+  for (const f of ['index.html','about.html','people.html','places.html','person.html','place.html']) {
+    inner = inner.replaceAll(`href="${f}"`, `href="/${f}"`);
+  }
+  inner = inner.replaceAll('href="p/', 'href="/p/');
+  inner = inner.replaceAll('href="place/', 'href="/place/');
+  inner = inner.replaceAll('src="assets/', 'src="/assets/');
+  inner = inner.replaceAll('href="assets/', 'href="/assets/');
+  inner = inner.replaceAll('src="data/', 'src="/data/');
+  inner = inner.replaceAll('href="data/', 'href="/data/');
+  return inner;
+};
+
+export async function getStaticPaths() {
+  const peopleJson = await fs.readFile(new URL('../../../public/data/people.json', import.meta.url), 'utf-8');
+  const people = JSON.parse(peopleJson);
+  return people.map((p) => ({ params: { id: p.id }, props: { person: p } }));
+}
+
+const { person } = Astro.props;
+const id = Astro.params.id;
+
+const title = `לזכרם | ${person?.name ?? 'ספר זיכרון'}`;
+const description = `עמוד זיכרון והדלקת נר לזכר ${person?.name ?? 'אדם יקר'}.`;
+
+const pickOgImage = (p) => {
+  const cand = p?.photo || p?.photoUrl || p?.image || p?.img || p?.ogImage || p?.avatar;
+  if (!cand) return "/assets/og-share-image.jpg";
+  const s = String(cand);
+  if (/^https?:\/\//i.test(s)) return s;
+  return s.startsWith("/") ? s : `/${s}`;
+};
+
+const ogImage = pickOgImage(person);
+
+let inner = normalizeInner(baseInnerRaw);
+inner = inner.replace(
+  /(<h1[^>]*id="personName"[^>]*>)([\s\S]*?)(<\/h1>)/i,
+  `$1${escapeHtml(person?.name ?? '')}$3`
+);
+inner = inner.replace(
+  '<button class="btn primary" type="submit">שליחה</button>',
+  '<button class="btn primary" type="submit">שליחה</button>\n            <p id="formStatus" class="form-status" role="status" aria-live="polite" tabindex="-1"></p>'
+);
+---
+
+<Layout title={title} description={description} ogTitle={title} ogDescription={description} ogImage={ogImage} active="people">
+  <script is:inline>{`window.PERSON_ID = ${JSON.stringify(id)};`}</script>
+  <Fragment set:html={inner} />
+</Layout>
