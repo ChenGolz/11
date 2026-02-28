@@ -1,6 +1,111 @@
 
 const DATA_URL = "data/people.json";
 
+const THEME_KEY = "memorial_theme_v1";
+const THEMES = [
+  { id: "dusk",  label: "Jerusalem Dusk" },
+  { id: "olive", label: "Olive Grove" },
+  { id: "stone", label: "Eternal Stone" },
+];
+
+function applyTheme(themeId){
+  const t = THEMES.some(x => x.id === themeId) ? themeId : "dusk";
+  document.documentElement.setAttribute("data-theme", t);
+  try { localStorage.setItem(THEME_KEY, t); } catch {}
+}
+
+function initThemePicker(){
+  const saved = (() => { try { return localStorage.getItem(THEME_KEY); } catch { return null; } })();
+  applyTheme(saved || "dusk");
+
+  // Inject a small theme switcher into the footer (so we don't have to edit every HTML file)
+  const footerBottom =
+    document.querySelector(".footer-bottom") ||
+    document.querySelector(".site-footer .wrap") ||
+    document.querySelector("footer");
+  if (!footerBottom || document.getElementById("themeSelect")) return;
+
+  const wrap = document.createElement("div");
+  wrap.className = "theme-picker";
+  wrap.innerHTML = `
+    <label class="tiny muted" for="themeSelect">ערכת צבעים</label>
+    <select id="themeSelect" aria-label="בחירת ערכת צבעים">
+      ${THEMES.map(t => `<option value="${t.id}">${t.label}</option>`).join("")}
+    </select>
+  `.trim();
+
+  footerBottom.appendChild(wrap);
+
+  const sel = wrap.querySelector("#themeSelect");
+  sel.value = document.documentElement.getAttribute("data-theme") || "dusk";
+  sel.addEventListener("change", () => applyTheme(sel.value));
+}
+
+function pickFeatured(people, n=3){
+  const withStories = people.filter(p => Array.isArray(p.articles) && p.articles.length);
+  const pool = (withStories.length >= n) ? withStories : people;
+  // shuffle (Fisher–Yates)
+  const a = pool.slice();
+  for (let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a.slice(0, Math.min(n, a.length));
+}
+
+function mountFeaturedSection(people){
+  // index page only (the canvas exists there)
+  if (!document.getElementById("field")) return;
+  const main = document.getElementById("main");
+  if (!main || document.getElementById("featuredRoot")) return;
+
+  const section = document.createElement("section");
+  section.className = "section";
+  section.innerHTML = `
+    <div class="wrap">
+      <div class="card">
+        <div class="row-between" style="gap:12px; align-items:flex-start; flex-wrap:wrap;">
+          <div>
+            <div class="kicker">להתחיל מכאן</div>
+            <h2 class="page-title" style="margin:6px 0 0; font-size:20px;">סיפורים נבחרים</h2>
+            <p class="page-sub" style="margin-top:8px;">כמה דפים לקריאה ולהדלקת נר.</p>
+          </div>
+          <a class="btn" href="people.html">לכל האנשים</a>
+        </div>
+        <div class="grid cols-3 people-grid" id="featuredRoot" style="margin-top:14px;"></div>
+      </div>
+    </div>
+  `.trim();
+
+  const hero = main.querySelector("section.hero");
+  if (hero) hero.insertAdjacentElement("afterend", section);
+  else main.appendChild(section);
+
+  const featuredRoot = section.querySelector("#featuredRoot");
+  const featured = pickFeatured(people, 3);
+  featuredRoot.innerHTML = featured.map(p => {
+    const place = p.place ? `יישוב: ${escapeHtml(p.place)}` : "";
+    const initial = initialOfName(p.name);
+    const context = p.context ? escapeHtml(p.context) : "";
+    return `
+      <article class="card person-card">
+        <div class="person-main">
+          <div class="person-avatar" aria-hidden="true">${escapeHtml(initial)}</div>
+          <div class="person-info">
+            <div class="person-meta">${place}</div>
+            <h3 class="person-name">${escapeHtml(p.name)}</h3>
+            ${context ? `<div class="small longform">${context}</div>` : ``}
+          </div>
+        </div>
+        <div class="person-cta">
+          <a class="btn primary" href="p/${escapeHtml(p.id)}.html">לפתיחה</a>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+
 /**
  * Backend (אופציונלי)
  * כדי להפוך נרות + מילים ל”משותפים לכולם”, מומלץ לחבר Supabase.
@@ -37,6 +142,20 @@ function escapeHtml(s) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+function normalizeHebrew(str){
+  return (str || "")
+    .toString()
+    .normalize("NFKD")
+    .replace(/[֑-ׇ]/g, "")      // remove niqqud + cantillation
+    .replace(/[׳״'"]/g, "")              // quotes / geresh
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")   // keep letters/numbers
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/ך/g,"כ").replace(/ם/g,"מ").replace(/ן/g,"נ").replace(/ף/g,"פ").replace(/ץ/g,"צ")
+    .toLowerCase();
+}
+
 
 // For safe insertion into HTML attributes (e.g. data-*).
 function escapeAttr(s) {
@@ -532,6 +651,14 @@ async function initField() {
 ======================= */
 async function initPeopleList() {
   const root = document.getElementById("peopleRoot");
+  let empty = document.getElementById("peopleEmpty");
+  if (!empty && root?.parentElement) {
+    empty = document.createElement("div");
+    empty.id = "peopleEmpty";
+    empty.className = "empty-state";
+    empty.hidden = true;
+    root.parentElement.appendChild(empty);
+  }
   const search = document.getElementById("peopleSearch");
   const placeSelect = document.getElementById("peoplePlace");
   if (!root) return;
@@ -550,9 +677,10 @@ async function initPeopleList() {
   function render() {
     const q = (search?.value || "").trim();
     const pl = (placeSelect?.value || "");
+    const nq = normalizeHebrew(q);
     const list = people.filter(p => {
       const okPlace = !pl || p.place === pl;
-      const okName = !q || p.name.includes(q);
+      const okName = !nq || normalizeHebrew(p.name).includes(nq);
       return okPlace && okName;
     });
 
@@ -582,6 +710,17 @@ async function initPeopleList() {
 
     const count = document.getElementById("peopleCount");
     if (count) count.textContent = `${list.length} מתוך ${people.length}`;
+
+    if (empty) {
+      if (!list.length) {
+        empty.hidden = false;
+        const hint = q ? `לא נמצאו תוצאות עבור “${escapeHtml(q)}”. אולי נסו איות אחר?` : "לא נמצאו תוצאות. נסו לבחור יישוב אחר.";
+        empty.innerHTML = `<strong>לא נמצאו תוצאות</strong><div style="margin-top:6px;">${hint}</div>`;
+      } else {
+        empty.hidden = true;
+      }
+    }
+
   }
 
   search?.addEventListener("input", render);
@@ -956,6 +1095,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setYear();
   bindMenu();
   setActiveNav();
+  initThemePicker();
 
   try {
     await initField();
