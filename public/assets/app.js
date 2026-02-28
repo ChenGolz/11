@@ -57,9 +57,9 @@ function setTextWithLang(el, text){
 
 function langAttrForText(text){
   const s = String(text ?? "");
-  const hasHeb = /[֐-׿]/.test(s);
+  const hasHeb = /[\u0590-\u05ff]/.test(s);
   const hasLat = /[A-Za-z]/.test(s);
-  return (!hasHeb && hasLat) ? ' lang="en"' : "";
+  return (!hasHeb && hasLat) ? ' lang="en" dir="ltr"' : "";
 }
 
 
@@ -343,12 +343,12 @@ function renderCanvasAltList(people){
 
 function colorForPlace(place) {
   const palette = [
-    "rgba(96,165,250,0.95)",
-    "rgba(59,130,246,0.95)",
-    "rgba(147,197,253,0.95)",
-    "rgba(99,102,241,0.95)",
-    "rgba(14,165,233,0.95)",
-    "rgba(125,211,252,0.95)"
+    "rgba(233,196,106,0.95)",
+    "rgba(167,139,250,0.95)",
+    "rgba(244,114,182,0.95)",
+    "rgba(56,189,248,0.95)",
+    "rgba(251,146,60,0.95)",
+    "rgba(34,211,238,0.95)"
   ];
   let h = 0;
   for (const ch of place) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -952,6 +952,7 @@ async function initPeopleList() {
   const search = document.getElementById("peopleSearch");
   const placeSelect = document.getElementById("peoplePlace");
   let pager = document.getElementById("peoplePager");
+  const empty = document.getElementById("peopleEmpty");
   if (!root) return;
 
   const people = await loadPeople();
@@ -997,6 +998,13 @@ async function initPeopleList() {
   const renderPager = (totalItems, filteredCount) => {
     const el = ensurePager();
     if (!el) return;
+
+    if (filteredCount <= 0) {
+      el.style.display = "none";
+      el.innerHTML = "";
+      return;
+    }
+    el.style.display = "block";
 
     const totalPages = Math.max(1, Math.ceil(filteredCount / pageSize));
     page = clamp(page, 1, totalPages);
@@ -1081,6 +1089,19 @@ async function initPeopleList() {
       </article>`;
       })
       .join("");
+
+if (empty) {
+  if (filtered.length === 0) {
+    const qText = (q || "").trim();
+    empty.hidden = false;
+    empty.innerHTML = qText
+      ? `לא נמצאו תוצאות עבור <strong>“${escapeHtml(qText)}”</strong>. אולי נסו איות אחר?`
+      : `לא נמצאו תוצאות.`;
+  } else {
+    empty.hidden = true;
+  }
+}
+
 
     const count = document.getElementById("peopleCount");
     if (count) count.textContent = `${filtered.length} מתוך ${people.length}`;
@@ -1637,6 +1658,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   ensurePreconnect();
 
   ensureFooterSupport();
+  initThemeSelect();
 
   try {
     await initField();
@@ -1650,3 +1672,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error(e);
   }
 });
+
+
+/* =======================
+   Theme (optional)
+======================= */
+function initThemeSelect(){
+  const sel = document.getElementById("themeSelect");
+  if (!sel) return;
+
+  const key = "memorialTheme";
+  const saved = localStorage.getItem(key);
+  const initial = saved || "dusk";
+  document.documentElement.dataset.theme = initial;
+  sel.value = initial;
+
+  sel.addEventListener("change", () => {
+    const v = sel.value || "dusk";
+    document.documentElement.dataset.theme = v;
+    try{ localStorage.setItem(key, v); }catch{}
+  });
+}

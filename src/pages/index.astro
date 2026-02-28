@@ -1,5 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import fs from 'node:fs';
+const people = JSON.parse(fs.readFileSync(new URL('../../public/data/people.json', import.meta.url), 'utf-8'));
+const featured = people.slice(0, 3);
+
 const title = 'אתר הנצחה | שדה אורות';
 const description = 'אתר הנצחה לאלו שנלקחו מאיתנו בשביעי באוקטובר 2023';
 ---
@@ -56,4 +60,32 @@ const description = 'אתר הנצחה לאלו שנלקחו מאיתנו בשב
         </p>
       </div>
     </section>
+
+
+<section class="section">
+  <div class="wrap">
+    <div class="card longform">
+      <h2 style="margin:0 0 6px;">טעימה מהזיכרון</h2>
+      <p class="muted" style="margin:0;">שלושה דפים לדוגמה — כדי להיכנס ישר לסיפור האישי. לשיתוף, עדיף להשתמש בקישור /p/ כדי שהשם יופיע בתצוגת מקדימה.</p>
+    </div>
+
+    <div class="featured-grid" aria-label="דפים מומלצים">
+      {featured.map(p => (
+        <article class="card person-card">
+          <div class="person-main">
+            <div class="person-avatar" aria-hidden="true">{p.name?.[0] ?? "•"}</div>
+            <div class="person-info">
+              <div class="person-meta">יישוב: {p.place}</div>
+              <h3 class="person-name">{p.name}</h3>
+            </div>
+          </div>
+          <div class="person-cta">
+            <a class="btn primary" href={`/p/${p.id}.html`}>לפתיחה</a>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
 </Layout>

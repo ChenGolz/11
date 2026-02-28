@@ -18,9 +18,14 @@ const description = 'דף שמרכז את כל דפי הזיכרון באתר, �
           <div id="peoplePager" class="pager" aria-label="דפדוף"></div>
         </div>
       </div>
-    </section
+    </section>
 
     <section class="section">
-      <div class="wrap grid people-grid" id="peopleRoot"></div>
+      <div class="wrap">
+        <div class="grid people-grid" id="peopleRoot"></div>
+        <div id="peopleEmpty" class="empty-state" role="status" aria-live="polite" hidden>
+          לא נמצאו תוצאות. אולי נסו איות אחר?
+        </div>
+      </div>
     </section>
 </Layout>
