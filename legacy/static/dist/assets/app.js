@@ -1,5 +1,16 @@
+const SITE_ROOT = (() => {
+  // Derive site root from where this script is served (works with <base> and sub-path deploys).
+  const s = document.currentScript || document.querySelector('script[src*="assets/app.js"]');
+  try{
+    const u = new URL((s && s.src) ? s.src : location.href, location.href);
+    // script is typically: <siteRoot>/assets/app.js
+    return new URL('../', u).href;
+  }catch{
+    return new URL('./', location.href).href;
+  }
+})();
 
-const DATA_URL = "data/people.json";
+const DATA_URL = new URL('data/people.json', SITE_ROOT).href;
 
 /**
  * Backend (אופציונלי)
@@ -42,6 +53,27 @@ function escapeHtml(s) {
 function escapeAttr(s) {
   return escapeHtml(s).replaceAll("`", "&#96;");
 }
+
+
+// Set text while marking purely-English strings for screen readers.
+function setTextWithLang(el, text){
+  if (!el) return;
+  const s = String(text ?? '');
+  el.textContent = s;
+  const hasHeb = /[֐-׿]/.test(s);
+  const hasLat = /[A-Za-z]/.test(s);
+  if (!hasHeb && hasLat) el.setAttribute('lang','en');
+  else el.removeAttribute('lang');
+}
+
+function langAttrForText(text){
+  const s = String(text ?? "");
+  const hasHeb = /[\u0590-\u05ff]/.test(s);
+  const hasLat = /[A-Za-z]/.test(s);
+  return (!hasHeb && hasLat) ? ' lang="en" dir="ltr"' : "";
+}
+
+
 function initialOfName(name) {
   const s = String(name ?? "")
     .replace(/["'״׳`]/g, "")
@@ -277,12 +309,22 @@ function bindMenu() {
 function setActiveNav() {
   const nav = document.getElementById("site-nav");
   if (!nav) return;
-  const path = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+
+  const path = (location.pathname || "/index.html")
+    .toLowerCase()
+    .replace(/^\/+/, "")
+    .split("/")
+    .pop() || "index.html";
+
   nav.querySelectorAll("a.pill").forEach((a) => {
-    const href = (a.getAttribute("href") || "").toLowerCase();
+    const hrefRaw = (a.getAttribute("href") || "").toLowerCase();
+    // normalize root-relative hrefs like "/people.html"
+    const href = hrefRaw.replace(/^\/+/, "").split("/").pop();
+    if (!href || href.startsWith("#")) return;
     a.classList.toggle("is-active", href === path);
   });
 }
+
 
 async function loadPeople() {
   const res = await fetch(DATA_URL, { cache: "no-store" });
@@ -304,7 +346,7 @@ function renderCanvasAltList(people){
   });
 
   ul.innerHTML = sorted.map(p => {
-    const href = `p/${encodeURIComponent(p.id)}.html`;
+    const href = `/p/${encodeURIComponent(p.id)}.html`;
     const label = `${p.name} — ${p.place}`;
     return `<li><a href="${escapeAttr(href)}">${escapeHtml(label)}</a></li>`;
   }).join("");
@@ -312,12 +354,12 @@ function renderCanvasAltList(people){
 
 function colorForPlace(place) {
   const palette = [
-    "rgba(96,165,250,0.95)",
-    "rgba(59,130,246,0.95)",
-    "rgba(147,197,253,0.95)",
-    "rgba(99,102,241,0.95)",
-    "rgba(14,165,233,0.95)",
-    "rgba(125,211,252,0.95)"
+    "rgba(233,196,106,0.95)",
+    "rgba(167,139,250,0.95)",
+    "rgba(244,114,182,0.95)",
+    "rgba(56,189,248,0.95)",
+    "rgba(251,146,60,0.95)",
+    "rgba(34,211,238,0.95)"
   ];
   let h = 0;
   for (const ch of place) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -814,7 +856,7 @@ async function initField() {
             placeSelect.value = hit.place;
             placeSelect.dispatchEvent(new Event("change"));
           } else {
-            location.href = `p/${encodeURIComponent(hit.id)}.html`;
+            location.href = `/p/${encodeURIComponent(hit.id)}.html`;
           }
         } else {
           tooltipHide();
@@ -842,7 +884,7 @@ async function initField() {
       placeSelect.dispatchEvent(new Event("change"));
       return;
     }
-    location.href = `p/${encodeURIComponent(hit.id)}.html`;
+    location.href = `/p/${encodeURIComponent(hit.id)}.html`;
   });
 
 
@@ -888,7 +930,7 @@ async function initField() {
         focusFilters();
         return;
       }
-      location.href = `p/${encodeURIComponent(hover.id)}.html`;
+      location.href = `/p/${encodeURIComponent(hover.id)}.html`;
       return;
     }
 
@@ -904,8 +946,8 @@ async function initField() {
       invalidate();
     }
   });
-  document.getElementById("goPeople")?.addEventListener("click", () => location.href = "people.html");
-  document.getElementById("goPlaces")?.addEventListener("click", () => location.href = "places.html");
+  document.getElementById("goPeople")?.addEventListener("click", () => location.href = "/people.html");
+  document.getElementById("goPlaces")?.addEventListener("click", () => location.href = "/places.html");
 
   placeSelect?.addEventListener("change", () => { hover = null; tooltipHide(); kbIndex = -1; if (reduceMotion) draw(performance.now()); });
   searchInput?.addEventListener("input", () => { hover = null; tooltipHide(); kbIndex = -1; if (reduceMotion) draw(performance.now()); });
@@ -920,6 +962,8 @@ async function initPeopleList() {
   const root = document.getElementById("peopleRoot");
   const search = document.getElementById("peopleSearch");
   const placeSelect = document.getElementById("peoplePlace");
+  let pager = document.getElementById("peoplePager");
+  const empty = document.getElementById("peopleEmpty");
   if (!root) return;
 
   const people = await loadPeople();
@@ -928,40 +972,121 @@ async function initPeopleList() {
   for (const p of people) {
     p._nameNorm = normalizeHebrew(p.name);
     const plNorm = normalizeHebrew(p.place);
-    const ctxNorm = normalizeHebrew(p.context || '');
-    p._hayNorm = (p._nameNorm + ' ' + plNorm + ' ' + ctxNorm).trim();
+    const ctxNorm = normalizeHebrew(p.context || "");
+    p._hayNorm = (p._nameNorm + " " + plNorm + " " + ctxNorm).trim();
   }
 
   const counts2 = new Map();
   for (const p of people) counts2.set(p.place, (counts2.get(p.place) || 0) + 1);
-  const places = unique(people.map(p=>p.place)).sort((a,b)=>a.localeCompare(b,"he"));
+  const places = unique(people.map((p) => p.place)).sort((a, b) => a.localeCompare(b, "he"));
 
   if (placeSelect) {
     placeSelect.innerHTML =
       `<option value="">כל היישובים</option>` +
-      places.map(pl => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts2.get(pl) || 0})</option>`).join("");
+      places
+        .map((pl) => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)} (${counts2.get(pl) || 0})</option>`)
+        .join("");
   }
 
-  function render() {
+  // Pagination (helps if you end up with thousands of names)
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  let pageSize = 50; // default
+  let page = 1;
+
+  const ensurePager = () => {
+    if (pager) return pager;
+
+    // Try to place pager under the filters card, fallback to just before the grid.
+    pager = document.createElement("div");
+    pager.id = "peoplePager";
+    pager.className = "pager";
+    const card = search?.closest(".card") || placeSelect?.closest(".card");
+    if (card) card.appendChild(pager);
+    else root.parentElement?.insertBefore(pager, root);
+    return pager;
+  };
+
+  const renderPager = (totalItems, filteredCount) => {
+    const el = ensurePager();
+    if (!el) return;
+
+    if (filteredCount <= 0) {
+      el.style.display = "none";
+      el.innerHTML = "";
+      return;
+    }
+    el.style.display = "block";
+
+    const totalPages = Math.max(1, Math.ceil(filteredCount / pageSize));
+    page = clamp(page, 1, totalPages);
+
+    el.innerHTML = `
+      <div class="pager-row">
+        <button type="button" class="btn" data-pager="prev" ${page <= 1 ? "disabled" : ""}>הקודם</button>
+        <span class="pager-label">עמוד ${page} מתוך ${totalPages}</span>
+        <button type="button" class="btn" data-pager="next" ${page >= totalPages ? "disabled" : ""}>הבא</button>
+
+        <label class="sr" for="peoplePageSize">כמות בעמוד</label>
+        <select id="peoplePageSize" class="pager-size">
+          ${[25,50,100,0].map(n => {
+            const label = n === 0 ? "הכול" : String(n);
+            const val = String(n);
+            const sel = (n === pageSize) ? "selected" : "";
+            return `<option value="${val}" ${sel}>${label}</option>`;
+          }).join("")}
+        </select>
+      </div>
+    `;
+
+    el.querySelector('[data-pager="prev"]')?.addEventListener("click", () => {
+      page = clamp(page - 1, 1, totalPages);
+      render(false);
+      root.scrollIntoView({ block: "start", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    });
+    el.querySelector('[data-pager="next"]')?.addEventListener("click", () => {
+      page = clamp(page + 1, 1, totalPages);
+      render(false);
+      root.scrollIntoView({ block: "start", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    });
+    el.querySelector("#peoplePageSize")?.addEventListener("change", (e) => {
+      const v = Number(e.target.value);
+      pageSize = (v === 0) ? filteredCount : v;
+      page = 1;
+      render(false);
+    });
+  };
+
+  function render(resetPage = true) {
+    if (resetPage) page = 1;
+
     const q = (search?.value || "").trim();
-    const pl = (placeSelect?.value || "");
-    const list = people.filter(p => {
+    const pl = placeSelect?.value || "";
+
+    const filtered = people.filter((p) => {
       const okPlace = !pl || p.place === pl;
       const okName = !q || fuzzyMatch(p._hayNorm, p._nameNorm, q);
       return okPlace && okName;
     });
 
-    root.innerHTML = list.map(p => {
-      const place = p.place ? `יישוב: ${escapeHtml(p.place)}` : "";
-      const initial = initialOfName(p.name);
-      const context = p.context ? escapeHtml(p.context) : "";
-      return `
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    page = clamp(page, 1, totalPages);
+
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const list = filtered.slice(start, end);
+
+    root.innerHTML = list
+      .map((p) => {
+        const place = p.place ? `יישוב: ${escapeHtml(p.place)}` : "";
+        const initial = initialOfName(p.name);
+        const context = p.context ? escapeHtml(p.context) : "";
+        return `
       <article class="card person-card">
         <div class="person-main">
           <div class="person-avatar" aria-hidden="true">${escapeHtml(initial)}</div>
           <div class="person-info">
             <div class="person-meta">${place}</div>
-            <h3 class="person-name">${escapeHtml(p.name)}</h3>
+            <h3 class="person-name"${langAttrForText(p.name)}>${escapeHtml(p.name)}</h3>
             ${context ? `<div class="small">${context}</div>` : ``}
           </div>
         </div>
@@ -970,22 +1095,38 @@ async function initPeopleList() {
           <div class="art-hint">איור</div>
         </div>
         <div class="person-cta">
-          <a class="btn primary" href="p/${escapeHtml(p.id)}.html">לפתיחה</a>
+          <a class="btn primary" href="/p/${encodeURIComponent(p.id)}.html">לפתיחה</a>
         </div>
       </article>`;
-    }).join("");
+      })
+      .join("");
+
+if (empty) {
+  if (filtered.length === 0) {
+    const qText = (q || "").trim();
+    empty.hidden = false;
+    empty.innerHTML = qText
+      ? `לא נמצאו תוצאות עבור <strong>“${escapeHtml(qText)}”</strong>. אולי נסו איות אחר?`
+      : `לא נמצאו תוצאות.`;
+  } else {
+    empty.hidden = true;
+  }
+}
+
 
     const count = document.getElementById("peopleCount");
-    if (count) count.textContent = `${list.length} מתוך ${people.length}`;
+    if (count) count.textContent = `${filtered.length} מתוך ${people.length}`;
+
+    renderPager(people.length, filtered.length);
   }
 
-  search?.addEventListener("input", render);
-  placeSelect?.addEventListener("change", render);
-  render();
+  search?.addEventListener("input", () => render(true));
+  placeSelect?.addEventListener("change", () => render(true));
+  render(true);
 }
 
 /* =======================
-   places.html – יישובים
+   places.html – יישובים – יישובים
 ======================= */
 async function initPlaces() {
   const root = document.getElementById("placesRoot");
@@ -1000,9 +1141,9 @@ async function initPlaces() {
   root.innerHTML = places.map(([pl, n]) => `
     <article class="card place-card">
       <div class="person-meta"><span>יישוב</span><span>${n} אנשים</span></div>
-      <h3>${escapeHtml(pl)}</h3>
+      <h3${langAttrForText(pl)}>${escapeHtml(pl)}</h3>
       <p class="muted">עמוד שמרכז את כולם יחד תחת היישוב.</p>
-      <a class="readmore" href="place/${encodeURIComponent(placeSlug(pl))}.html">לדף היישוב →</a>
+      <a class="readmore" href="/place/${encodeURIComponent(placeSlug(pl))}.html">לדף היישוב →</a>
     </article>
   `).join("");
 
@@ -1026,23 +1167,23 @@ async function initPlacePage() {
   const people = await loadPeople();
   const list = people.filter(p => p.place === pl);
 
-  title.textContent = pl;
+  setTextWithLang(title, pl);
   if (sub) sub.textContent = `${list.length} אנשים`;
   if (intro) intro.textContent = placeIntro(pl);
 
   try{
     const t = `אתר הנצחה | ${pl}`;
     const d = `עמוד יישוב שמרכז יחד את דפי הזיכרון של קהילת ${pl}.`;
-    const img = new URL("assets/default-share-image.png", document.baseURI).href;
+    const img = new URL("/assets/default-share-image.png", location.origin).href;
     updateSocialMeta({ title: t, description: d, url: location.href, image: img });
   }catch{}
 
   root.innerHTML = list.map(p => `
     <article class="card person-card">
       <div class="person-meta"><span>${escapeHtml(pl)}</span><span>דף אישי</span></div>
-      <h3>${escapeHtml(p.name)}</h3>
+      <h3${langAttrForText(p.name)}>${escapeHtml(p.name)}</h3>
       <p class="muted">ספר זיכרון דיגיטלי.</p>
-      <a class="readmore" href="p/${encodeURIComponent(p.id)}.html">לספר הזיכרון →</a>
+      <a class="readmore" href="/p/${encodeURIComponent(p.id)}.html">לספר הזיכרון →</a>
     </article>
   `).join("");
 }
@@ -1077,23 +1218,54 @@ async function initPersonPage() {
   const articlesRoot = document.getElementById("articlesRoot");
   const backendNote = document.getElementById("backendNote");
 
+
+  // a11y: polite status region for form success/error + focus management
+  let formStatus = document.getElementById("formStatus");
+  const ensureFormStatus = () => {
+    if (formStatus) return formStatus;
+    if (!guestForm) return null;
+    const el = document.createElement("p");
+    el.id = "formStatus";
+    el.className = "form-status";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+    el.tabIndex = -1;
+    el.style.display = "none";
+    const btn = guestForm.querySelector('button[type="submit"]');
+    (btn?.parentElement || guestForm).appendChild(el);
+    formStatus = el;
+    return el;
+  };
+  const setFormStatus = (msg, { focus = false } = {}) => {
+    const el = ensureFormStatus();
+    if (!el) return;
+    el.textContent = msg || "";
+    el.style.display = msg ? "block" : "none";
+    if (msg && focus) {
+      try {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ block: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+      } catch {}
+    }
+  };
+
   if (!nameEl || !id) return;
 
   const people = await loadPeople();
   const person = people.find(p => p.id === id);
   if (!person) { nameEl.textContent = "לא נמצא אדם"; return; }
 
-  nameEl.textContent = person.name;
+  setTextWithLang(nameEl, person.name);
   if (placeLink) {
-    placeLink.href = `place/${encodeURIComponent(placeSlug(person.place))}.html`;
-    placeLink.textContent = person.place;
+    placeLink.href = `/place/${encodeURIComponent(placeSlug(person.place))}.html`;
+    setTextWithLang(placeLink, person.place);
   }
 
   // Best-effort client-side meta update (SSR/SSG is still recommended for scrapers)
   try{
     const t = `אתר הנצחה | ${person.name}`;
     const d = `עמוד זיכרון והדלקת נר לזכר ${person.name}.`;
-    const img = new URL("assets/default-share-image.png", document.baseURI).href;
+    const img = new URL("/assets/default-share-image.png", location.origin).href;
     updateSocialMeta({ title: t, description: d, url: location.href, image: img });
   }catch{}
 
@@ -1254,6 +1426,8 @@ async function initPersonPage() {
     const text = (guestForm.text?.value || "").trim();
     if (!text) return;
 
+    setFormStatus("");
+
     const submitBtn = guestForm.querySelector('button[type="submit"]');
     const prevText = submitBtn?.textContent || "שליחה";
     const setUi = (on) => {
@@ -1275,6 +1449,7 @@ async function initPersonPage() {
         saveLocal(gbKey, entriesLocal);
         guestForm.reset();
         renderLocalGuestbook();
+        setFormStatus("תודה. המילים נשמרו במכשיר זה.", { focus: true });
         return;
       }
 
@@ -1291,9 +1466,11 @@ async function initPersonPage() {
 
       guestForm.reset();
       if (guestList) guestList.innerHTML = `<p class="muted">תודה. המילים נשלחו לאישור ויופיעו לאחר בדיקה.</p>`;
+      setFormStatus("תודה. המילים נשלחו לאישור.", { focus: true });
     } catch (error) {
       console.error(error);
       if (guestList) guestList.innerHTML = `<p class="muted">לא הצלחנו לשלוח כרגע. נסו שוב מאוחר יותר.</p>`;
+      setFormStatus("לא הצלחנו לשלוח כרגע. נסו שוב מאוחר יותר.", { focus: true });
     } finally {
       guestSending = false;
       setUi(false);
@@ -1388,20 +1565,25 @@ async function initPersonPage() {
 ======================= */
 function ensureFooterSupport(){
   const foot = document.querySelector(".site-footer .footer-bottom");
-  if (!foot || foot.querySelector(".footer-support")) return;
+  if (!foot) return;
 
-  const support = document.createElement("div");
-  support.className = "footer-support";
-  support.innerHTML = `
-    <strong>תמיכה נפשית:</strong>
-    <a href="tel:1201" aria-label="ער״ן 1201">ער״ן – 1201</a>
-    <a href="tel:*3362" aria-label="נט״ל כוכבית 3362">נט״ל – ‎*3362</a>
-    <button type="button" id="audioToggle" class="audio-toggle" aria-pressed="false" aria-label="הפעלת/כיבוי סאונד אווירה">
-      <span aria-hidden="true">🔇</span><span>סאונד</span>
-    </button>
-    <span class="hint">אם את/ה במצוקה מיידית — פנו למוקד חירום מקומי.</span>
-  `;
-  foot.appendChild(support);
+  let support = foot.querySelector(".footer-support");
+  if (!support) {
+    support = document.createElement("div");
+    support.className = "footer-support";
+    support.innerHTML = `
+      <strong>תמיכה נפשית:</strong>
+      <a href="tel:1201" aria-label="ער״ן 1201">ער״ן – 1201</a>
+      <a href="tel:*3362" aria-label="נט״ל כוכבית 3362">נט״ל – ‎*3362</a>
+      <button type="button" id="audioToggle" class="audio-toggle" aria-pressed="false" aria-label="הפעלת/כיבוי סאונד אווירה">
+        <span aria-hidden="true">🔇</span><span>סאונד</span>
+      </button>
+      <span class="hint">אם את/ה במצוקה מיידית — פנו למוקד חירום מקומי.</span>
+    `;
+    foot.prepend(support);
+  }
+
+  // Always attempt to init the toggle (even if markup existed in HTML via an SSG).
   initAmbientAudio(support.querySelector("#audioToggle"));
 }
 
@@ -1487,6 +1669,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   ensurePreconnect();
 
   ensureFooterSupport();
+  ensureThemePicker();
+  initThemeSelect();
 
   try {
     await initField();
@@ -1496,7 +1680,52 @@ document.addEventListener("DOMContentLoaded", async () => {
     await initPersonPage();
   } catch (e) {
     const err = document.getElementById("fatal");
-    if (err) err.textContent = "אירעה שגיאה בטעינת הנתונים.";
+    if (err) {
+      err.textContent = (location.protocol === "file:")
+        ? "נראה שהדף נפתח מהמחשב (file://). כדי לטעון נתונים צריך שרת מקומי: npm run dev או python -m http.server"
+        : "אירעה שגיאה בטעינת הנתונים.";
+    }
     console.error(e);
   }
 });
+
+
+
+function ensureThemePicker(){
+  // Root HTML files don't have the selector (Astro layout does). Inject it so theme changes are visible everywhere.
+  if (document.getElementById("themeSelect")) return;
+  const foot = document.querySelector(".site-footer .footer-bottom");
+  if (!foot) return;
+
+  const box = document.createElement("div");
+  box.className = "theme-picker";
+  box.innerHTML = `
+    <label class="sr" for="themeSelect">ערכת צבעים</label>
+    <select id="themeSelect" class="theme-select" aria-label="בחירת ערכת צבעים">
+      <option value="dusk">Jerusalem Dusk</option>
+      <option value="olive">Olive Grove</option>
+      <option value="stone">Eternal Stone</option>
+    </select>
+  `;
+  foot.appendChild(box);
+}
+
+/* =======================
+   Theme (optional)
+======================= */
+function initThemeSelect(){
+  const sel = document.getElementById("themeSelect");
+  if (!sel) return;
+
+  const key = "memorialTheme";
+  const saved = localStorage.getItem(key);
+  const initial = saved || "dusk";
+  document.documentElement.dataset.theme = initial;
+  sel.value = initial;
+
+  sel.addEventListener("change", () => {
+    const v = sel.value || "dusk";
+    document.documentElement.dataset.theme = v;
+    try{ localStorage.setItem(key, v); }catch{}
+  });
+}

@@ -1,5 +1,16 @@
+const SITE_ROOT = (() => {
+  // Derive site root from where this script is served (works with <base> and sub-path deploys).
+  const s = document.currentScript || document.querySelector('script[src*="assets/app.js"]');
+  try{
+    const u = new URL((s && s.src) ? s.src : location.href, location.href);
+    // script is typically: <siteRoot>/assets/app.js
+    return new URL('../', u).href;
+  }catch{
+    return new URL('./', location.href).href;
+  }
+})();
 
-const DATA_URL = "/data/people.json";
+const DATA_URL = new URL('data/people.json', SITE_ROOT).href;
 
 /**
  * Backend (אופציונלי)
@@ -1658,6 +1669,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   ensurePreconnect();
 
   ensureFooterSupport();
+  ensureThemePicker();
   initThemeSelect();
 
   try {
@@ -1668,11 +1680,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     await initPersonPage();
   } catch (e) {
     const err = document.getElementById("fatal");
-    if (err) err.textContent = "אירעה שגיאה בטעינת הנתונים.";
+    if (err) {
+      err.textContent = (location.protocol === "file:")
+        ? "נראה שהדף נפתח מהמחשב (file://). כדי לטעון נתונים צריך שרת מקומי: npm run dev או python -m http.server"
+        : "אירעה שגיאה בטעינת הנתונים.";
+    }
     console.error(e);
   }
 });
 
+
+
+function ensureThemePicker(){
+  // Root HTML files don't have the selector (Astro layout does). Inject it so theme changes are visible everywhere.
+  if (document.getElementById("themeSelect")) return;
+  const foot = document.querySelector(".site-footer .footer-bottom");
+  if (!foot) return;
+
+  const box = document.createElement("div");
+  box.className = "theme-picker";
+  box.innerHTML = `
+    <label class="sr" for="themeSelect">ערכת צבעים</label>
+    <select id="themeSelect" class="theme-select" aria-label="בחירת ערכת צבעים">
+      <option value="dusk">Jerusalem Dusk</option>
+      <option value="olive">Olive Grove</option>
+      <option value="stone">Eternal Stone</option>
+    </select>
+  `;
+  foot.appendChild(box);
+}
 
 /* =======================
    Theme (optional)
